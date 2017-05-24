@@ -12,5 +12,5 @@ import hirondelle.date4j.DateTime;
 
 public interface APISyncDataFetcher<T> {
 
-  List<T> fetch(DateTime syncDate);
+  List<T> fetch(DateTime lastSyncTimeStamp, DateTime currentSyncTimeStamp);
 }
