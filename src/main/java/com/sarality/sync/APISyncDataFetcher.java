@@ -12,5 +12,19 @@ import hirondelle.date4j.DateTime;
 
 public interface APISyncDataFetcher<T> {
 
-  List<T> fetch(DateTime lastSyncTimeStamp, DateTime currentSyncTimeStamp);
+  /**
+   * Initializes the fetcher.
+   * @param lastSyncTimeStamp Timestamp of the last successful sync
+   * @param currentSyncTimeStamp Timestamp for the current sync to prevent race condition
+   */
+  void init(DateTime lastSyncTimeStamp, DateTime currentSyncTimeStamp);
+
+
+  /**
+   * Returns a page of results
+   * @return List of data objects. null if no more results.
+   */
+  List<T> fetchNext();
+
+
 }

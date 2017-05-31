@@ -30,20 +30,24 @@ public class APISyncExecutor<T, R> {
 
     DateTime currentSyncTimeStamp = DateTime.now(TimeZone.getDefault());
 
-    List<T> sourceDataList = fetcher.fetch(lastSyncTimeStamp, currentSyncTimeStamp);
-    requestGenerator.init(sourceDataList);
+    fetcher.init(lastSyncTimeStamp, currentSyncTimeStamp);
 
-    for (T data : sourceDataList) {
-      R request = requestGenerator.generateSyncRequest(data);
-      try {
-        apiExecutor.init(data, request);
-      } catch (IOException e) {
-        // TODO (@Satya) if executor could not init - what next?
+    List<T> sourceDataList = fetcher.fetchNext();
+    while (sourceDataList != null) {
+      requestGenerator.init(sourceDataList);
+
+      for (T data : sourceDataList) {
+        R request = requestGenerator.generateSyncRequest(data);
+        try {
+          apiExecutor.init(data, request);
+        } catch (IOException e) {
+          // TODO (@Satya) if executor could not init - what next?
+        }
+
+        // TODO (@Satya) if failed, should increment error count and then determine if we should continue or abort sync
+        // because error count is too high. maintain error/retry queue
+        apiExecutor.execute();
       }
-
-      // TODO (@Satya) if failed, should increment error count and then determine if we should continue or abort sync
-      // because error count is too high. maintain error/retry queue
-      apiExecutor.execute();
     }
 
     return currentSyncTimeStamp;
