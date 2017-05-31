@@ -12,18 +12,21 @@ import hirondelle.date4j.DateTime;
  * @author Satya@ (Satya Puniani)
  */
 
-public class APISyncExecutor<T, R> {
+public class APISyncExecutor<T, S, R> {
 
   private final APISyncDataFetcher<T> fetcher;
-  private final APISyncRequestGenerator<T, R> requestGenerator;
-  private final APICallExecutor<T, R> apiExecutor;
+  private final APISyncSourceCollator<T, S> collator;
+  private final APISyncRequestGenerator<S, R> requestGenerator;
+  private final APICallExecutor<S, R> apiExecutor;
 
   public APISyncExecutor(APISyncDataFetcher<T> fetcher,
-      APISyncRequestGenerator<T, R> requestGenerator,
-      APICallExecutor<T, R> apiExecutor) {
+      APISyncSourceCollator<T, S> collator,
+      APISyncRequestGenerator<S, R> requestGenerator,
+      APICallExecutor<S, R> apiExecutor) {
     this.fetcher = fetcher;
     this.requestGenerator = requestGenerator;
     this.apiExecutor = apiExecutor;
+    this.collator = collator;
   }
 
   public DateTime execute(DateTime lastSyncTimeStamp) {
@@ -34,9 +37,9 @@ public class APISyncExecutor<T, R> {
 
     List<T> sourceDataList = fetcher.fetchNext();
     while (sourceDataList != null) {
-      requestGenerator.init(sourceDataList);
+      List<S> collatedList = collator.collate(sourceDataList);
 
-      for (T data : sourceDataList) {
+      for (S data : collatedList) {
         R request = requestGenerator.generateSyncRequest(data);
         try {
           apiExecutor.init(data, request);

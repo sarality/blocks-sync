@@ -15,19 +15,19 @@ import java.io.IOException;
  * @author Satya@ (Satya Puniani)
  */
 
-public abstract class APICallExecutor<T, R> {
+public abstract class APICallExecutor<S, R> {
 
-  private T source;
+  private S source;
   private R request;
 
-  public void init(T source, R request) throws IOException {
+  public void init(S source, R request) throws IOException {
     this.source = source;
     this.request = request;
   }
 
   protected abstract AbstractGoogleJsonClientRequest<R> getApiCall();
 
-  protected abstract APISyncResponseHandler<T, R> getResponseHandler();
+  protected abstract APISyncResponseHandler<S, R> getResponseHandler();
 
   public final boolean execute() {
     APISyncResponseType apiSyncResponseType = APISyncResponseType.FAILED_RETRY;
