@@ -5,10 +5,9 @@ import java.io.IOException;
 /**
  * Interface for handlers for API Responses
  *
- * @author Satya@ (Satya Puniani)
- * @param <T> transformed domain data object that was being synced
+ * @param <S> transformed domain data object that was being synced
  * @param <R> request object sent to API / response object from the API
- *
+ * @author Satya@ (Satya Puniani)
  */
 
 public interface APISyncResponseHandler<S, R> {

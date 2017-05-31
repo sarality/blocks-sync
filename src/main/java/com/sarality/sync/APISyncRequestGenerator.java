@@ -1,7 +1,5 @@
 package com.sarality.sync;
 
-import java.util.List;
-
 /**
  * generates API Request objects from the source domain data objects
  *

@@ -2,9 +2,6 @@ package com.sarality.sync;
 
 import com.google.api.client.googleapis.services.json.AbstractGoogleJsonClientRequest;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 
 /**
