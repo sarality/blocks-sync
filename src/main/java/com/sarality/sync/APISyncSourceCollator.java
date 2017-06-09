@@ -12,5 +12,4 @@ public interface APISyncSourceCollator<T, S> {
 
   public List<S> collate(List<T> dataList);
 
-  // TODO(@Satya) implement a globalId Manager for setting globalId for localId of objects
 }
