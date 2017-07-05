@@ -33,7 +33,7 @@ public class APISyncExecutor<T, S, R> {
 
     DateTime currentSyncTimeStamp = DateTime.now(TimeZone.getDefault());
 
-    fetcher.init(lastSyncTimeStamp, currentSyncTimeStamp);
+    fetcher.init();
 
     List<T> sourceDataList = fetcher.fetchNext();
     while (sourceDataList != null) {
@@ -51,6 +51,8 @@ public class APISyncExecutor<T, S, R> {
         // because error count is too high. maintain error/retry queue
         apiExecutor.execute();
       }
+
+      sourceDataList = fetcher.fetchNext();
     }
 
     return currentSyncTimeStamp;
