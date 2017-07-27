@@ -9,7 +9,7 @@ import java.io.IOException;
  * Implementors need to provide the API Call that should be attempted and the response handler that can take care of
  * actions based on the response, or if there was an IOException then process the exception.
  *
- * @author Satya@ (Satya Puniani)
+ * @author satya@ (Satya Puniani)
  */
 
 public abstract class APICallExecutor<S, R> {
@@ -27,6 +27,11 @@ public abstract class APICallExecutor<S, R> {
   protected abstract APISyncResponseHandler<S, R> getResponseHandler();
 
   public final boolean execute() {
+    //mothing to execute
+    if (getApiCall() == null) {
+      return false;
+    }
+
     APISyncResponseType apiSyncResponseType = APISyncResponseType.FAILED_RETRY;
 
     while (apiSyncResponseType.equals(APISyncResponseType.FAILED_RETRY)) {

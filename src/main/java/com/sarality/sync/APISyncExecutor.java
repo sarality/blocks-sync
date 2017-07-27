@@ -41,15 +41,17 @@ public class APISyncExecutor<T, S, R> {
 
       for (S data : collatedList) {
         R request = requestGenerator.generateSyncRequest(data);
-        try {
-          apiExecutor.init(data, request);
-        } catch (IOException e) {
-          // TODO (@Satya) if executor could not init - what next?
-        }
+        if (request != null) {
+          try {
+            apiExecutor.init(data, request);
+          } catch (IOException e) {
+            // TODO (@Satya) if executor could not init - what next?
+          }
 
-        // TODO (@Satya) if failed, should increment error count and then determine if we should continue or abort sync
-        // because error count is too high. maintain error/retry queue
-        apiExecutor.execute();
+          // TODO (@Satya) if failed, should increment error count and then determine if we should continue or abort sync
+          // because error count is too high. maintain error/retry queue
+          apiExecutor.execute();
+        }
       }
 
       sourceDataList = fetcher.fetchNext();
