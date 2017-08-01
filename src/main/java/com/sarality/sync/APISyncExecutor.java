@@ -1,10 +1,10 @@
 package com.sarality.sync;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.util.List;
-import java.util.TimeZone;
-
-import hirondelle.date4j.DateTime;
 
 /**
  * Executes an API Sync by calling the appropriate Endpoint action for each item in the source list
@@ -13,6 +13,8 @@ import hirondelle.date4j.DateTime;
  */
 
 public class APISyncExecutor<T, S, R> {
+
+  private static final Logger logger = LoggerFactory.getLogger(APISyncExecutor.class.getSimpleName());
 
   private final APISyncDataFetcher<T> fetcher;
   private final APISyncSourceCollator<T, S> collator;
@@ -29,9 +31,7 @@ public class APISyncExecutor<T, S, R> {
     this.collator = collator;
   }
 
-  public DateTime execute(DateTime lastSyncTimeStamp) {
-
-    DateTime currentSyncTimeStamp = DateTime.now(TimeZone.getDefault());
+  public void execute() {
 
     fetcher.init();
 
@@ -46,18 +46,25 @@ public class APISyncExecutor<T, S, R> {
             apiExecutor.init(data, request);
           } catch (IOException e) {
             // TODO (@Satya) if executor could not init - what next?
+            logger.info("[SYNC-ERROR] IOError from apiExecutor for request object {} for source {}: " + e.toString(),
+                request.toString(),
+                data.toString());
           }
 
-          // TODO (@Satya) if failed, should increment error count and then determine if we should continue or abort sync
-          // because error count is too high. maintain error/retry queue
-          apiExecutor.execute();
+          if (!apiExecutor.execute()) {
+            // TODO (@Satya) if failed, should increment error count and then determine if we should continue or abort sync
+            // because error count is too high. maintain error/retry queue
+            logger.info("[SYNC-ERROR] Error in API call for request {} for source {}",
+                request.toString(),
+                data.toString());
+          }
+        } else {
+          logger.info("[SYNC-ERROR] Skipped. Request object is null for source " + data.toString());
         }
       }
 
       sourceDataList = fetcher.fetchNext();
     }
-
-    return currentSyncTimeStamp;
 
   }
 
