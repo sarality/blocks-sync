@@ -1,5 +1,9 @@
 package com.sarality.sync;
 
+import com.sarality.task.TaskCompletionListener;
+import com.sarality.task.TaskProgressListener;
+import com.sarality.task.TaskProgressPublisher;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,14 +16,16 @@ import java.util.List;
  * @author Satya@ (Satya Puniani)
  */
 
-public class APISyncExecutor<T, S, R> {
+public class APISyncExecutor<T, S, R> implements TaskProgressPublisher<SyncProgressCount> {
 
   private static final Logger logger = LoggerFactory.getLogger(APISyncExecutor.class.getSimpleName());
+  private static final int PROGRESS_INTERVAL = 10;
 
   private final APISyncDataFetcher<T> fetcher;
   private final APISyncSourceCollator<T, S> collator;
   private final APISyncRequestGenerator<S, R> requestGenerator;
   private final APICallExecutor<S, R> apiExecutor;
+  private TaskProgressListener<SyncProgressCount> progressListener;
 
   public APISyncExecutor(APISyncDataFetcher<T> fetcher,
       APISyncSourceCollator<T, S> collator,
@@ -32,12 +38,26 @@ public class APISyncExecutor<T, S, R> {
   }
 
   public void execute() {
+    execute(null, null);
+  }
 
-    fetcher.init();
+  public void execute(TaskProgressListener<SyncProgressCount> progressListener,
+      TaskCompletionListener<SyncProgressCount> completionListener) {
+    this.progressListener = progressListener;
+
+    int pageCount = fetcher.init();
+
 
     List<T> sourceDataList = fetcher.fetchNext();
+    int currentPage = 0;
+    int progressCount = 0;
+    int itemsOnPage = 0;
+
     while (sourceDataList != null) {
       List<S> collatedList = collator.collate(sourceDataList);
+      itemsOnPage = collatedList.size();
+
+      updateProgress(new SyncProgressCount(++currentPage, pageCount, progressCount, itemsOnPage));
 
       for (S data : collatedList) {
         R request = requestGenerator.generateSyncRequest(data);
@@ -61,11 +81,22 @@ public class APISyncExecutor<T, S, R> {
         } else {
           logger.info("[SYNC-ERROR] Skipped. Request object is null for source " + data.toString());
         }
-      }
 
+        if (++progressCount % PROGRESS_INTERVAL == 0) {
+          updateProgress(new SyncProgressCount(currentPage, pageCount, progressCount, itemsOnPage));
+        }
+      }
       sourceDataList = fetcher.fetchNext();
     }
-
+    if (completionListener != null) {
+      completionListener.onComplete(new SyncProgressCount(currentPage, pageCount, progressCount, itemsOnPage));
+    }
   }
 
+  @Override
+  public void updateProgress(SyncProgressCount progress) {
+    if (progressListener != null) {
+      progressListener.onProgressUpdate(progress);
+    }
+  }
 }
