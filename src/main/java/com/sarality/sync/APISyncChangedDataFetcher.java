@@ -33,8 +33,9 @@ public class APISyncChangedDataFetcher<T, E extends Enum<E>> implements APISyncD
   }
 
   @Override
-  public void init() {
+  public int init() {
     this.isAfterLast = false;
+    return 1;
   }
 
   @Override

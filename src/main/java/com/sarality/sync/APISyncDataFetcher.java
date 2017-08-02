@@ -12,8 +12,10 @@ public interface APISyncDataFetcher<T> {
 
   /**
    * Initializes the fetcher.
+   *
+   * @return number of pages of results
    */
-  void init();
+  int init();
 
 
   /**
