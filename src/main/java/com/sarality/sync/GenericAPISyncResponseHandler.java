@@ -17,7 +17,7 @@ import hirondelle.date4j.DateTime;
  * @author Satya@ (Satya Puniani)
  */
 
-public class SyncUpdaterAPISyncResponseHandler<T, S, R, E extends Enum<E>> implements APISyncResponseHandler<S, R> {
+public class GenericAPISyncResponseHandler<T, S, R, E extends Enum<E>> implements APISyncResponseHandler<S, R> {
 
   private final Table<T> table;
   SyncStatusUpdater<T, E> syncUpdater;
@@ -29,7 +29,7 @@ public class SyncUpdaterAPISyncResponseHandler<T, S, R, E extends Enum<E>> imple
   FieldValueSetter<T, String> globalIdSetter;
   FieldValueSetter<T, Long> globalVersionSetter;
 
-  public SyncUpdaterAPISyncResponseHandler(Table<T> table,
+  public GenericAPISyncResponseHandler(Table<T> table,
       SyncStatusUpdater<T, E> syncUpdater,
       SyncErrorLogger logger,
       FieldValueGetter<T, Long> idGetter,
@@ -81,7 +81,7 @@ public class SyncUpdaterAPISyncResponseHandler<T, S, R, E extends Enum<E>> imple
       if (dataList.size() > 0) {
         for (T data : dataList) {
           Long sourceId = idGetter.getValue(data);
-          logger.logError(e, sourceId, table.getName(), DateTime.now(TimeZone.getDefault()), e.getMessage());
+          logger.logError(e, sourceId, table.getName());
         }
       } else {
         logger.logError(e);
