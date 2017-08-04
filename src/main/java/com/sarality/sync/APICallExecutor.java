@@ -2,6 +2,9 @@ package com.sarality.sync;
 
 import com.google.api.client.googleapis.services.json.AbstractGoogleJsonClientRequest;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 
 /**
@@ -13,6 +16,8 @@ import java.io.IOException;
  */
 
 public abstract class APICallExecutor<S, R> {
+
+  private static Logger logger = LoggerFactory.getLogger(APICallExecutor.class);
 
   private S source;
   private R request;
@@ -29,6 +34,7 @@ public abstract class APICallExecutor<S, R> {
   public final boolean execute() {
     //mothing to execute
     if (getApiCall() == null) {
+      logger.info("[SYNC-ERROR] No API Call for: {}", request.toString());
       return false;
     }
 
@@ -40,10 +46,9 @@ public abstract class APICallExecutor<S, R> {
       try {
         R response = getApiCall().execute();
         apiSyncResponseType = getResponseHandler().process(source, response);
-
       } catch (IOException e) {
         // TODO(@Satya) request transformer should be set by error processor
-        apiSyncResponseType = getResponseHandler().processError(e, request);
+        apiSyncResponseType = getResponseHandler().processError(e, source, request);
       }
 
     }
