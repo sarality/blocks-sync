@@ -54,6 +54,7 @@ public class GenericAPISyncResponseHandler<T, S, R, E extends Enum<E>> implement
     Long globalVersion = responseVersionGetter.getValue(responseData);
     List<T> dataList = sourceDataGetter.getValue(sourceData);
     String globalDataId = globalId.toString();
+    // TODO (@Satya) if globalId is null OR existing global Id is different, log an exception
 
     for (T data : dataList) {
       globalIdSetter.setValue(data, globalDataId);
