@@ -7,9 +7,6 @@ import com.sarality.sync.db.SyncStatusUpdater;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.TimeZone;
-
-import hirondelle.date4j.DateTime;
 
 /**
  * Response Handler for API Create/Update requests.
@@ -24,7 +21,7 @@ public class GenericAPISyncResponseHandler<T, S, R, E extends Enum<E>> implement
   SyncErrorLogger logger;
   FieldValueGetter<T, Long> idGetter;
   FieldValueGetter<R, Long> responseGlobalIdGetter;
-  FieldValueGetter<R, Long> responseVersionIdGetter;
+  FieldValueGetter<R, Long> responseVersionGetter;
   FieldValueGetter<S, List<T>> sourceDataGetter;
   FieldValueSetter<T, String> globalIdSetter;
   FieldValueSetter<T, Long> globalVersionSetter;
@@ -34,7 +31,7 @@ public class GenericAPISyncResponseHandler<T, S, R, E extends Enum<E>> implement
       SyncErrorLogger logger,
       FieldValueGetter<T, Long> idGetter,
       FieldValueGetter<R, Long> responseGlobalIdGetter,
-      FieldValueGetter<R, Long> responseVersionIdGetter,
+      FieldValueGetter<R, Long> responseVersionGetter,
       FieldValueGetter<S, List<T>> sourceDataGetter,
       FieldValueSetter<T, String> globalIdSetter,
       FieldValueSetter<T, Long> globalVersionSetter) {
@@ -43,7 +40,7 @@ public class GenericAPISyncResponseHandler<T, S, R, E extends Enum<E>> implement
     this.logger = logger;
     this.idGetter = idGetter;
     this.responseGlobalIdGetter = responseGlobalIdGetter;
-    this.responseVersionIdGetter = responseVersionIdGetter;
+    this.responseVersionGetter = responseVersionGetter;
     this.sourceDataGetter = sourceDataGetter;
     this.globalIdSetter = globalIdSetter;
     this.globalVersionSetter = globalVersionSetter;
@@ -54,7 +51,7 @@ public class GenericAPISyncResponseHandler<T, S, R, E extends Enum<E>> implement
   public APISyncResponseType process(S sourceData, R responseData) {
 
     Long globalId = responseGlobalIdGetter.getValue(responseData);
-    Long globalVersion = responseVersionIdGetter.getValue(responseData);
+    Long globalVersion = responseVersionGetter.getValue(responseData);
     List<T> dataList = sourceDataGetter.getValue(sourceData);
     String globalDataId = globalId.toString();
 
