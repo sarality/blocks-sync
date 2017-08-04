@@ -14,6 +14,6 @@ public interface APISyncResponseHandler<S, R> {
 
   public APISyncResponseType process(S sourceData, R responseData);
 
-  public APISyncResponseType processError(IOException e, R requestData);
+  public APISyncResponseType processError(IOException e, S sourceData, R requestData);
 
 }
