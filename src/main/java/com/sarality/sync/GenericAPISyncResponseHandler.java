@@ -17,18 +17,16 @@ import java.util.List;
 public class GenericAPISyncResponseHandler<T, S, R, E extends Enum<E>> implements APISyncResponseHandler<S, R> {
 
   private final Table<T> table;
-  SyncStatusUpdater<T, E> syncUpdater;
-  SyncErrorLogger logger;
-  FieldValueGetter<T, Long> idGetter;
-  FieldValueGetter<R, Long> responseGlobalIdGetter;
-  FieldValueGetter<R, Long> responseVersionGetter;
-  FieldValueGetter<S, List<T>> sourceDataGetter;
-  FieldValueSetter<T, String> globalIdSetter;
-  FieldValueSetter<T, Long> globalVersionSetter;
+  private final SyncStatusUpdater<T, E> syncUpdater;
+  private final FieldValueGetter<T, Long> idGetter;
+  private final FieldValueGetter<R, Long> responseGlobalIdGetter;
+  private final FieldValueGetter<R, Long> responseVersionGetter;
+  private final FieldValueGetter<S, List<T>> sourceDataGetter;
+  private final FieldValueSetter<T, String> globalIdSetter;
+  private final FieldValueSetter<T, Long> globalVersionSetter;
 
   public GenericAPISyncResponseHandler(Table<T> table,
       SyncStatusUpdater<T, E> syncUpdater,
-      SyncErrorLogger logger,
       FieldValueGetter<T, Long> idGetter,
       FieldValueGetter<R, Long> responseGlobalIdGetter,
       FieldValueGetter<R, Long> responseVersionGetter,
@@ -37,7 +35,6 @@ public class GenericAPISyncResponseHandler<T, S, R, E extends Enum<E>> implement
       FieldValueSetter<T, Long> globalVersionSetter) {
     this.table = table;
     this.syncUpdater = syncUpdater;
-    this.logger = logger;
     this.idGetter = idGetter;
     this.responseGlobalIdGetter = responseGlobalIdGetter;
     this.responseVersionGetter = responseVersionGetter;
@@ -73,18 +70,6 @@ public class GenericAPISyncResponseHandler<T, S, R, E extends Enum<E>> implement
 
   @Override
   public APISyncResponseType processError(IOException e, S sourceData, R requestData) {
-
-    if (logger != null) {
-      List<T> dataList = sourceDataGetter.getValue(sourceData);
-      if (dataList.size() > 0) {
-        for (T data : dataList) {
-          Long sourceId = idGetter.getValue(data);
-          logger.logError(e, sourceId, table.getName());
-        }
-      } else {
-        logger.logError(e);
-      }
-    }
     return APISyncResponseType.FAILED_ABORT;
   }
 }
