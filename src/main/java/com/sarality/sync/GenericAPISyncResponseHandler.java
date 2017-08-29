@@ -3,9 +3,13 @@ package com.sarality.sync;
 import com.sarality.db.Table;
 import com.sarality.db.common.FieldValueGetter;
 import com.sarality.db.common.FieldValueSetter;
+import com.sarality.sync.data.APISyncErrorLocation;
+import com.sarality.sync.data.BaseAPISyncErrorCode;
+import com.sarality.sync.data.SyncErrorData;
 import com.sarality.sync.db.SyncStatusUpdater;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -24,6 +28,8 @@ public class GenericAPISyncResponseHandler<T, S, R, E extends Enum<E>> implement
   private final FieldValueGetter<S, List<T>> sourceDataGetter;
   private final FieldValueSetter<T, String> globalIdSetter;
   private final FieldValueSetter<T, Long> globalVersionSetter;
+  private final List<SyncErrorData> syncErrorList = new ArrayList<>();
+
 
   public GenericAPISyncResponseHandler(Table<T> table,
       SyncStatusUpdater<T, E> syncUpdater,
@@ -41,6 +47,10 @@ public class GenericAPISyncResponseHandler<T, S, R, E extends Enum<E>> implement
     this.sourceDataGetter = sourceDataGetter;
     this.globalIdSetter = globalIdSetter;
     this.globalVersionSetter = globalVersionSetter;
+  }
+
+  private void addError(SyncErrorData errorData) {
+    syncErrorList.add(errorData);
   }
 
 
@@ -69,7 +79,31 @@ public class GenericAPISyncResponseHandler<T, S, R, E extends Enum<E>> implement
   }
 
   @Override
+  public List<SyncErrorData> getSyncErrors() {
+    return syncErrorList;
+  }
+
+  @Override
   public APISyncResponseType processError(IOException e, S sourceData, R requestData) {
+
+    List<T> dataList = sourceDataGetter.getValue(sourceData);
+    if (dataList.size() > 0) {
+      for (T data : dataList) {
+        Long sourceId = idGetter.getValue(data);
+        addError(new SyncErrorData(APISyncErrorLocation.RESPONSE_HANDLER,
+            BaseAPISyncErrorCode.IO_EXCEPTION,
+            table.getName(),
+            sourceId,
+            e.toString()));
+      }
+    } else {
+      addError(new SyncErrorData(APISyncErrorLocation.RESPONSE_HANDLER,
+          BaseAPISyncErrorCode.IO_EXCEPTION,
+          table.getName(),
+          null,
+          e.toString()));
+    }
+
     return APISyncResponseType.FAILED_ABORT;
   }
 }
