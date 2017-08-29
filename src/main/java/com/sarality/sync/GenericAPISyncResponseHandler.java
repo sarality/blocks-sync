@@ -28,7 +28,7 @@ public class GenericAPISyncResponseHandler<T, S, R, E extends Enum<E>> implement
   private final FieldValueGetter<S, List<T>> sourceDataGetter;
   private final FieldValueSetter<T, String> globalIdSetter;
   private final FieldValueSetter<T, Long> globalVersionSetter;
-  private final List<SyncErrorData> syncErrorList = new ArrayList<>();
+  private List<SyncErrorData> syncErrorList = new ArrayList<>();
 
 
   public GenericAPISyncResponseHandler(Table<T> table,
@@ -85,6 +85,7 @@ public class GenericAPISyncResponseHandler<T, S, R, E extends Enum<E>> implement
 
   @Override
   public APISyncResponseType processError(IOException e, S sourceData, R requestData) {
+    this.syncErrorList = new ArrayList<>();
 
     List<T> dataList = sourceDataGetter.getValue(sourceData);
     if (dataList.size() > 0) {
