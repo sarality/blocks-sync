@@ -10,7 +10,8 @@ public enum BaseAPISyncErrorCode implements APISyncErrorCode {
   RUN_TIME_EXCEPTION(101),
   IO_EXCEPTION(102),
   NO_REQUEST_GENERATED(103),
-  NO_API_CALL_INITIALISED(104);
+  NO_API_CALL_INITIALISED(104),
+  NO_SYNC_EXECUTOR_REGISTERED(105);
 
   private static int baseValue = 10000;
   private int value;

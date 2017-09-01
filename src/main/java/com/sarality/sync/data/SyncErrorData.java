@@ -1,5 +1,8 @@
 package com.sarality.sync.data;
 
+
+import hirondelle.date4j.DateTime;
+
 /**
  * Data object for tracking errors during sync to server
  *
@@ -12,14 +15,24 @@ public class SyncErrorData {
   private String tableName;
   private Long syncRecordId;
   private String errorDetail;
+  private int errorCodeValue;
+  private Long syncErrorId;
+  private DateTime errorTimeStamp;
 
-  public SyncErrorData(APISyncErrorLocation errorLocation, APISyncErrorCode errorCode, Exception e) {
-    this(errorLocation, errorCode, null, null, e.toString());
+
+  public SyncErrorData(APISyncErrorLocation errorLocation, APISyncErrorCode errorCode, Throwable t) {
+    this(errorLocation, errorCode, null, null, t.toString());
   }
 
   public SyncErrorData(APISyncErrorLocation errorLocation, APISyncErrorCode errorCode, String errorDetail) {
     this(errorLocation, errorCode, null, null, errorDetail);
   }
+
+  public SyncErrorData(APISyncErrorLocation errorLocation, APISyncErrorCode errorCode, String tableName,
+      String errorDetail) {
+    this(errorLocation, errorCode, tableName, null, errorDetail);
+  }
+
 
   public SyncErrorData(APISyncErrorLocation errorLocation, APISyncErrorCode errorCode, String tableName,
       Long syncRecordId, Exception e) {
@@ -30,48 +43,54 @@ public class SyncErrorData {
       Long syncRecordId, String errorDetail) {
     this.errorLocation = errorLocation;
     this.errorCode = errorCode;
+    this.errorCodeValue = errorCode.getCode();
     this.tableName = tableName;
     this.syncRecordId = syncRecordId;
     this.errorDetail = errorDetail;
+  }
+
+  public SyncErrorData(Long syncErrorId, APISyncErrorLocation errorLocation, int errorCodeValue, String tableName,
+      Long syncRecordId, String errorDetail, DateTime errorTimeStamp) {
+    this.syncErrorId = syncErrorId;
+    this.errorLocation = errorLocation;
+    this.errorCode = null;
+    this.errorCodeValue = errorCodeValue;
+    this.tableName = tableName;
+    this.syncRecordId = syncRecordId;
+    this.errorDetail = errorDetail;
+    this.errorTimeStamp = errorTimeStamp;
   }
 
   public APISyncErrorLocation getErrorLocation() {
     return errorLocation;
   }
 
-  public void setErrorLocation(APISyncErrorLocation errorLocation) {
-    this.errorLocation = errorLocation;
-  }
-
   public APISyncErrorCode getErrorCode() {
     return errorCode;
-  }
-
-  public void setErrorCode(APISyncErrorCode errorCode) {
-    this.errorCode = errorCode;
   }
 
   public String getTableName() {
     return tableName;
   }
 
-  public void setTableName(String tableName) {
-    this.tableName = tableName;
-  }
-
   public Long getSyncRecordId() {
     return syncRecordId;
-  }
-
-  public void setSyncRecordId(Long syncRecordId) {
-    this.syncRecordId = syncRecordId;
   }
 
   public String getErrorDetail() {
     return errorDetail;
   }
 
-  public void setErrorDetail(String errorDetail) {
-    this.errorDetail = errorDetail;
+  public int getErrorCodeValue() {
+    return errorCodeValue;
   }
+
+  public DateTime getErrorTimeStamp() {
+    return errorTimeStamp;
+  }
+
+  public Long getSyncErrorId() {
+    return syncErrorId;
+  }
+
 }
