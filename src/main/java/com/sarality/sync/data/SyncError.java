@@ -9,7 +9,7 @@ import hirondelle.date4j.DateTime;
  * @author satya (satya puniani)
  */
 
-public class SyncErrorData {
+public class SyncError {
   private APISyncErrorLocation errorLocation;
   private APISyncErrorCode errorCode;
   private String tableName;
@@ -20,26 +20,26 @@ public class SyncErrorData {
   private DateTime errorTimeStamp;
 
 
-  public SyncErrorData(APISyncErrorLocation errorLocation, APISyncErrorCode errorCode, Throwable t) {
+  public SyncError(APISyncErrorLocation errorLocation, APISyncErrorCode errorCode, Throwable t) {
     this(errorLocation, errorCode, null, null, t.toString());
   }
 
-  public SyncErrorData(APISyncErrorLocation errorLocation, APISyncErrorCode errorCode, String errorDetail) {
+  public SyncError(APISyncErrorLocation errorLocation, APISyncErrorCode errorCode, String errorDetail) {
     this(errorLocation, errorCode, null, null, errorDetail);
   }
 
-  public SyncErrorData(APISyncErrorLocation errorLocation, APISyncErrorCode errorCode, String tableName,
+  public SyncError(APISyncErrorLocation errorLocation, APISyncErrorCode errorCode, String tableName,
       String errorDetail) {
     this(errorLocation, errorCode, tableName, null, errorDetail);
   }
 
 
-  public SyncErrorData(APISyncErrorLocation errorLocation, APISyncErrorCode errorCode, String tableName,
+  public SyncError(APISyncErrorLocation errorLocation, APISyncErrorCode errorCode, String tableName,
       Long syncRecordId, Exception e) {
     this(errorLocation, errorCode, tableName, syncRecordId, e.toString());
   }
 
-  public SyncErrorData(APISyncErrorLocation errorLocation, APISyncErrorCode errorCode, String tableName,
+  public SyncError(APISyncErrorLocation errorLocation, APISyncErrorCode errorCode, String tableName,
       Long syncRecordId, String errorDetail) {
     this.errorLocation = errorLocation;
     this.errorCode = errorCode;
@@ -49,7 +49,7 @@ public class SyncErrorData {
     this.errorDetail = errorDetail;
   }
 
-  public SyncErrorData(Long syncErrorId, APISyncErrorLocation errorLocation, int errorCodeValue, String tableName,
+  public SyncError(Long syncErrorId, APISyncErrorLocation errorLocation, int errorCodeValue, String tableName,
       Long syncRecordId, String errorDetail, DateTime errorTimeStamp) {
     this.syncErrorId = syncErrorId;
     this.errorLocation = errorLocation;
