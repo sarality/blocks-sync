@@ -18,7 +18,6 @@ import java.util.List;
  */
 
 public class GenericAPISyncResponseHandler<T, S, R, E extends Enum<E>>
-    extends BaseAPISyncErrorCollector<SyncError>
     implements APISyncResponseHandler<S, R> {
 
   private final Table<T> table;
@@ -29,6 +28,8 @@ public class GenericAPISyncResponseHandler<T, S, R, E extends Enum<E>>
   private final FieldValueGetter<S, List<T>> sourceDataGetter;
   private final FieldValueSetter<T, String> globalIdSetter;
   private final FieldValueSetter<T, Long> globalVersionSetter;
+  private final BaseAPISyncErrorCollector<SyncError> errorCollector = new BaseAPISyncErrorCollector<>();
+
 
   public GenericAPISyncResponseHandler(Table<T> table,
       SyncStatusUpdater<T, E> syncUpdater,
@@ -74,20 +75,20 @@ public class GenericAPISyncResponseHandler<T, S, R, E extends Enum<E>>
 
   @Override
   public APISyncResponseType processError(IOException e, S sourceData, R requestData) {
-    initErrorList();
+    errorCollector.initErrorList();
 
     List<T> dataList = sourceDataGetter.getValue(sourceData);
     if (dataList.size() > 0) {
       for (T data : dataList) {
         Long sourceId = idGetter.getValue(data);
-        addError(new SyncError(APISyncErrorLocation.RESPONSE_HANDLER,
+        errorCollector.addError(new SyncError(APISyncErrorLocation.RESPONSE_HANDLER,
             BaseAPISyncErrorCode.IO_EXCEPTION,
             table.getName(),
             sourceId,
             e.toString()));
       }
     } else {
-      addError(new SyncError(APISyncErrorLocation.RESPONSE_HANDLER,
+      errorCollector.addError(new SyncError(APISyncErrorLocation.RESPONSE_HANDLER,
           BaseAPISyncErrorCode.IO_EXCEPTION,
           table.getName(),
           null,
@@ -95,5 +96,15 @@ public class GenericAPISyncResponseHandler<T, S, R, E extends Enum<E>>
     }
 
     return APISyncResponseType.FAILED_ABORT;
+  }
+
+  @Override
+  public List<SyncError> getSyncErrors() {
+    return errorCollector.getSyncErrors();
+  }
+
+  @Override
+  public boolean hasErrors() {
+    return errorCollector.hasErrors();
   }
 }

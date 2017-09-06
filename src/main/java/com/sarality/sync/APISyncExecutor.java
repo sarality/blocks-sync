@@ -19,8 +19,7 @@ import java.util.List;
  * @author Satya@ (Satya Puniani)
  */
 
-public class APISyncExecutor<T, S, R> extends BaseAPISyncErrorCollector<SyncError>
-    implements TaskProgressPublisher<SyncProgressCount> {
+public class APISyncExecutor<T, S, R> implements TaskProgressPublisher<SyncProgressCount> {
 
   private static final Logger logger = LoggerFactory.getLogger(APISyncExecutor.class.getSimpleName());
   private static final int PROGRESS_INTERVAL = 10;
@@ -30,6 +29,7 @@ public class APISyncExecutor<T, S, R> extends BaseAPISyncErrorCollector<SyncErro
   private final APISyncRequestGenerator<S, R> requestGenerator;
   private final APICallExecutor<S, R> apiExecutor;
   private TaskProgressListener<SyncProgressCount> progressListener;
+  private BaseAPISyncErrorCollector<SyncError> collector = new BaseAPISyncErrorCollector<>();
 
   public APISyncExecutor(APISyncDataFetcher<T> fetcher,
       APISyncSourceCollator<T, S> collator,
@@ -48,7 +48,7 @@ public class APISyncExecutor<T, S, R> extends BaseAPISyncErrorCollector<SyncErro
   public boolean execute(TaskProgressListener<SyncProgressCount> progressListener,
       TaskCompletionListener<SyncProgressCount> completionListener) {
     this.progressListener = progressListener;
-    initErrorList();
+    collector.initErrorList();
 
     int pageCount = fetcher.init();
 
@@ -72,7 +72,7 @@ public class APISyncExecutor<T, S, R> extends BaseAPISyncErrorCollector<SyncErro
           request = requestGenerator.generateSyncRequest(data);
           // TODO (@Satya) check if there were errors and add them to the error list.
         } catch (Throwable t) {
-          addError(new SyncError(APISyncErrorLocation.API_SYNC_EXECUTE,
+          collector.addError(new SyncError(APISyncErrorLocation.API_SYNC_EXECUTE,
               BaseAPISyncErrorCode.NO_REQUEST_GENERATED, t));
         }
         if (request != null) {
@@ -82,7 +82,7 @@ public class APISyncExecutor<T, S, R> extends BaseAPISyncErrorCollector<SyncErro
             logger.info("[SYNC-ERROR] IOError from apiExecutor for request object {} for source {}: " + e.toString(),
                 request.toString(),
                 data.toString());
-            addError(new SyncError(APISyncErrorLocation.API_SYNC_EXECUTE,
+            collector.addError(new SyncError(APISyncErrorLocation.API_SYNC_EXECUTE,
                 BaseAPISyncErrorCode.IO_EXCEPTION, e));
           }
 
@@ -92,11 +92,12 @@ public class APISyncExecutor<T, S, R> extends BaseAPISyncErrorCollector<SyncErro
               logger.info("[SYNC-ERROR] Error in API call for request {} for source {}",
                   request.toString(),
                   data.toString());
-              addErrors(apiExecutor.getSyncErrors());
+              collector.addErrors(apiExecutor.getSyncErrors());
             }
           } catch (Throwable t) {
-            addError(new SyncError(APISyncErrorLocation.API_SYNC_EXECUTE,
-                BaseAPISyncErrorCode.RUN_TIME_EXCEPTION, t));
+            collector.addError(new SyncError(APISyncErrorLocation.API_SYNC_EXECUTE, BaseAPISyncErrorCode
+                .RUN_TIME_EXCEPTION,
+                t));
           }
         }
 
@@ -111,7 +112,7 @@ public class APISyncExecutor<T, S, R> extends BaseAPISyncErrorCollector<SyncErro
       completionListener.onComplete(new SyncProgressCount(currentPage, pageCount, progressCount, itemsOnPage));
     }
 
-    return !hasErrors();
+    return !collector.hasErrors();
   }
 
   @Override
@@ -119,6 +120,14 @@ public class APISyncExecutor<T, S, R> extends BaseAPISyncErrorCollector<SyncErro
     if (progressListener != null) {
       progressListener.onProgressUpdate(progress);
     }
+  }
+
+  public List<SyncError> getSyncErrors() {
+    return collector.getSyncErrors();
+  }
+
+  public boolean hasErrors() {
+  return collector.hasErrors();
   }
 
 

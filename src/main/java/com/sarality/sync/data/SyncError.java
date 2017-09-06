@@ -33,12 +33,6 @@ public class SyncError {
     this(errorLocation, errorCode, tableName, null, errorDetail);
   }
 
-
-  public SyncError(APISyncErrorLocation errorLocation, APISyncErrorCode errorCode, String tableName,
-      Long syncRecordId, Exception e) {
-    this(errorLocation, errorCode, tableName, syncRecordId, e.toString());
-  }
-
   public SyncError(APISyncErrorLocation errorLocation, APISyncErrorCode errorCode, String tableName,
       Long syncRecordId, String errorDetail) {
     this.errorLocation = errorLocation;

@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -19,13 +20,14 @@ import java.util.Locale;
  * @author satya@ (Satya Puniani)
  */
 
-public abstract class APICallExecutor<S, R> extends BaseAPISyncErrorCollector<SyncError> {
+public abstract class APICallExecutor<S, R> {
 
   private static Logger logger = LoggerFactory.getLogger(APICallExecutor.class);
   private static int MAX_RETRY_COUNT = 3;
 
   private S source;
   private R request;
+  private BaseAPISyncErrorCollector<SyncError> collector = new BaseAPISyncErrorCollector<>();
 
   public void init(S source, R request) throws IOException {
     this.source = source;
@@ -40,7 +42,7 @@ public abstract class APICallExecutor<S, R> extends BaseAPISyncErrorCollector<Sy
     //mothing to execute
     if (getApiCall() == null) {
       logger.info("[SYNC-ERROR] No API Call for: {}", request.toString());
-      addError(new SyncError(APISyncErrorLocation.API_CALL_EXECUTOR,
+      collector.addError(new SyncError(APISyncErrorLocation.API_CALL_EXECUTOR,
           BaseAPISyncErrorCode.NO_API_CALL_INITIALISED,
           String.format(Locale.getDefault(), "No API Call initialized for: %1s", request.toString())));
       return false;
@@ -64,8 +66,16 @@ public abstract class APICallExecutor<S, R> extends BaseAPISyncErrorCollector<Sy
     }
 
     if (!apiSyncResponseType.equals(APISyncResponseType.SUCCESS)) {
-      addErrors(getResponseHandler().getSyncErrors());
+      collector.addErrors(getResponseHandler().getSyncErrors());
     }
     return apiSyncResponseType.equals(APISyncResponseType.SUCCESS);
+  }
+
+  public boolean hasErrors() {
+    return collector.hasErrors();
+  }
+
+  public List<SyncError> getSyncErrors() {
+    return collector.getSyncErrors();
   }
 }
