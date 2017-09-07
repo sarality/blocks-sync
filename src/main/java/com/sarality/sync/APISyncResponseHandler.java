@@ -1,6 +1,6 @@
 package com.sarality.sync;
 
-import com.sarality.sync.data.SyncErrorData;
+import com.sarality.sync.data.SyncError;
 
 import java.io.IOException;
 import java.util.List;
@@ -13,12 +13,14 @@ import java.util.List;
  * @author Satya@ (Satya Puniani)
  */
 
-public interface APISyncResponseHandler<S, R> {
+public interface APISyncResponseHandler<S, R>  {
 
-  public APISyncResponseType process(S sourceData, R responseData);
+  APISyncResponseType process(S sourceData, R responseData);
 
-  public APISyncResponseType processError(IOException e, S sourceData, R requestData);
+  APISyncResponseType processError(IOException e, S sourceData, R requestData);
 
-  public List<SyncErrorData> getSyncErrors();
+  List<SyncError> getSyncErrors();
+
+  boolean hasErrors();
 
 }

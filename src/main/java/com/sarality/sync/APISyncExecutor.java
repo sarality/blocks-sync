@@ -2,7 +2,7 @@ package com.sarality.sync;
 
 import com.sarality.sync.data.APISyncErrorLocation;
 import com.sarality.sync.data.BaseAPISyncErrorCode;
-import com.sarality.sync.data.SyncErrorData;
+import com.sarality.sync.data.SyncError;
 import com.sarality.task.TaskCompletionListener;
 import com.sarality.task.TaskProgressListener;
 import com.sarality.task.TaskProgressPublisher;
@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -30,9 +29,7 @@ public class APISyncExecutor<T, S, R> implements TaskProgressPublisher<SyncProgr
   private final APISyncRequestGenerator<S, R> requestGenerator;
   private final APICallExecutor<S, R> apiExecutor;
   private TaskProgressListener<SyncProgressCount> progressListener;
-  private List<SyncErrorData> syncErrorList = new ArrayList<>();
-  private boolean hasErrors = false;
-
+  private BaseAPISyncErrorCollector<SyncError> collector = new BaseAPISyncErrorCollector<>();
 
   public APISyncExecutor(APISyncDataFetcher<T> fetcher,
       APISyncSourceCollator<T, S> collator,
@@ -51,8 +48,7 @@ public class APISyncExecutor<T, S, R> implements TaskProgressPublisher<SyncProgr
   public boolean execute(TaskProgressListener<SyncProgressCount> progressListener,
       TaskCompletionListener<SyncProgressCount> completionListener) {
     this.progressListener = progressListener;
-    hasErrors = false;
-    syncErrorList = new ArrayList<>();
+    collector.initErrorList();
 
     int pageCount = fetcher.init();
 
@@ -76,8 +72,7 @@ public class APISyncExecutor<T, S, R> implements TaskProgressPublisher<SyncProgr
           request = requestGenerator.generateSyncRequest(data);
           // TODO (@Satya) check if there were errors and add them to the error list.
         } catch (Throwable t) {
-          hasErrors = true;
-          addError(new SyncErrorData(APISyncErrorLocation.API_SYNC_EXECUTE,
+          collector.addError(new SyncError(APISyncErrorLocation.API_SYNC_EXECUTE,
               BaseAPISyncErrorCode.NO_REQUEST_GENERATED, t));
         }
         if (request != null) {
@@ -87,24 +82,22 @@ public class APISyncExecutor<T, S, R> implements TaskProgressPublisher<SyncProgr
             logger.info("[SYNC-ERROR] IOError from apiExecutor for request object {} for source {}: " + e.toString(),
                 request.toString(),
                 data.toString());
-            hasErrors = true;
-            addError(new SyncErrorData(APISyncErrorLocation.API_SYNC_EXECUTE,
+            collector.addError(new SyncError(APISyncErrorLocation.API_SYNC_EXECUTE,
                 BaseAPISyncErrorCode.IO_EXCEPTION, e));
           }
 
           try {
             if (!apiExecutor.execute()) {
               // TODO (@Satya) retry based on error type.
-              hasErrors = true;
               logger.info("[SYNC-ERROR] Error in API call for request {} for source {}",
                   request.toString(),
                   data.toString());
-              addErrors(apiExecutor.getSyncErrors());
+              collector.addErrors(apiExecutor.getSyncErrors());
             }
           } catch (Throwable t) {
-            hasErrors = true;
-            addError(new SyncErrorData(APISyncErrorLocation.API_SYNC_EXECUTE,
-                BaseAPISyncErrorCode.RUN_TIME_EXCEPTION, t));
+            collector.addError(new SyncError(APISyncErrorLocation.API_SYNC_EXECUTE, BaseAPISyncErrorCode
+                .RUN_TIME_EXCEPTION,
+                t));
           }
         }
 
@@ -119,7 +112,7 @@ public class APISyncExecutor<T, S, R> implements TaskProgressPublisher<SyncProgr
       completionListener.onComplete(new SyncProgressCount(currentPage, pageCount, progressCount, itemsOnPage));
     }
 
-    return !hasErrors;
+    return !collector.hasErrors();
   }
 
   @Override
@@ -129,20 +122,13 @@ public class APISyncExecutor<T, S, R> implements TaskProgressPublisher<SyncProgr
     }
   }
 
-  private void addError(SyncErrorData errorData) {
-    syncErrorList.add(errorData);
-  }
-
-  private void addErrors(List<SyncErrorData> errorDataList) {
-    syncErrorList.addAll(errorDataList);
-  }
-
-  public List<SyncErrorData> getSyncErrors() {
-    return syncErrorList;
+  public List<SyncError> getSyncErrors() {
+    return collector.getSyncErrors();
   }
 
   public boolean hasErrors() {
-    return hasErrors;
+  return collector.hasErrors();
   }
+
 
 }

@@ -3,13 +3,12 @@ package com.sarality.sync;
 import com.google.api.client.googleapis.services.json.AbstractGoogleJsonClientRequest;
 import com.sarality.sync.data.APISyncErrorLocation;
 import com.sarality.sync.data.BaseAPISyncErrorCode;
-import com.sarality.sync.data.SyncErrorData;
+import com.sarality.sync.data.SyncError;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -28,25 +27,11 @@ public abstract class APICallExecutor<S, R> {
 
   private S source;
   private R request;
-
-  private List<SyncErrorData> syncErrors = new ArrayList<>();
+  private BaseAPISyncErrorCollector<SyncError> collector = new BaseAPISyncErrorCollector<>();
 
   public void init(S source, R request) throws IOException {
     this.source = source;
     this.request = request;
-    this.syncErrors = new ArrayList<>();
-  }
-
-  private void addError(SyncErrorData errorData) {
-    syncErrors.add(errorData);
-  }
-
-  private void addErrors(List<SyncErrorData> errorDataList) {
-    syncErrors.addAll(errorDataList);
-  }
-
-  public List<SyncErrorData> getSyncErrors() {
-    return syncErrors;
   }
 
   protected abstract AbstractGoogleJsonClientRequest<R> getApiCall();
@@ -57,9 +42,9 @@ public abstract class APICallExecutor<S, R> {
     //mothing to execute
     if (getApiCall() == null) {
       logger.info("[SYNC-ERROR] No API Call for: {}", request.toString());
-      addError(new SyncErrorData(APISyncErrorLocation.API_CALL_EXECUTOR,
+      collector.addError(new SyncError(APISyncErrorLocation.API_CALL_EXECUTOR,
           BaseAPISyncErrorCode.NO_API_CALL_INITIALISED,
-          String.format(Locale.getDefault(),"No API Call initialized for: %1s", request.toString())));
+          String.format(Locale.getDefault(), "No API Call initialized for: %1s", request.toString())));
       return false;
     }
 
@@ -81,8 +66,16 @@ public abstract class APICallExecutor<S, R> {
     }
 
     if (!apiSyncResponseType.equals(APISyncResponseType.SUCCESS)) {
-      addErrors(getResponseHandler().getSyncErrors());
+      collector.addErrors(getResponseHandler().getSyncErrors());
     }
     return apiSyncResponseType.equals(APISyncResponseType.SUCCESS);
+  }
+
+  public boolean hasErrors() {
+    return collector.hasErrors();
+  }
+
+  public List<SyncError> getSyncErrors() {
+    return collector.getSyncErrors();
   }
 }
