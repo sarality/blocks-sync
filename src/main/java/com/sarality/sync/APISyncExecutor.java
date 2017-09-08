@@ -26,14 +26,14 @@ public class APISyncExecutor<T, S, R> implements TaskProgressPublisher<SyncProgr
 
   private final APISyncDataFetcher<T> fetcher;
   private final APISyncSourceCollator<T, S> collator;
-  private final APISyncRequestGenerator<S, R> requestGenerator;
+  private final APISyncRequestGenerator<S, R, SyncError> requestGenerator;
   private final APICallExecutor<S, R> apiExecutor;
   private TaskProgressListener<SyncProgressCount> progressListener;
   private BaseAPISyncErrorCollector<SyncError> collector = new BaseAPISyncErrorCollector<>();
 
   public APISyncExecutor(APISyncDataFetcher<T> fetcher,
       APISyncSourceCollator<T, S> collator,
-      APISyncRequestGenerator<S, R> requestGenerator,
+      APISyncRequestGenerator<S, R, SyncError> requestGenerator,
       APICallExecutor<S, R> apiExecutor) {
     this.fetcher = fetcher;
     this.requestGenerator = requestGenerator;
@@ -70,7 +70,9 @@ public class APISyncExecutor<T, S, R> implements TaskProgressPublisher<SyncProgr
         R request = null;
         try {
           request = requestGenerator.generateSyncRequest(data);
-          // TODO (@Satya) check if there were errors and add them to the error list.
+          if (requestGenerator.hasErrors()) {
+            collector.addErrors(requestGenerator.getSyncErrors());
+          }
         } catch (Throwable t) {
           collector.addError(new SyncError(APISyncErrorLocation.API_SYNC_EXECUTE,
               BaseAPISyncErrorCode.NO_REQUEST_GENERATED, t));
@@ -127,7 +129,7 @@ public class APISyncExecutor<T, S, R> implements TaskProgressPublisher<SyncProgr
   }
 
   public boolean hasErrors() {
-  return collector.hasErrors();
+    return collector.hasErrors();
   }
 
 
