@@ -8,8 +8,13 @@ import java.util.List;
  * @author Satya@ (Satya Puniani)
  */
 
-public interface APISyncSourceCollator<T, S> {
+public interface APISyncSourceCollator<T, S, X> {
 
-  public List<S> collate(List<T> dataList);
+  List<S> collate(List<T> dataList);
+
+  List<X> getSyncErrors();
+
+  boolean hasErrors();
+
 
 }
