@@ -30,6 +30,7 @@ public abstract class APICallExecutor<S, R> {
   private BaseAPISyncErrorCollector<SyncError> collector = new BaseAPISyncErrorCollector<>();
 
   public void init(S source, R request) throws IOException {
+    this.collector.initErrorList();
     this.source = source;
     this.request = request;
   }
