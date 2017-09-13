@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -25,14 +26,14 @@ public class APISyncExecutor<T, S, R> implements TaskProgressPublisher<SyncProgr
   private static final int PROGRESS_INTERVAL = 10;
 
   private final APISyncDataFetcher<T> fetcher;
-  private final APISyncSourceCollator<T, S> collator;
+  private final APISyncSourceCollator<T, S, SyncError> collator;
   private final APISyncRequestGenerator<S, R, SyncError> requestGenerator;
   private final APICallExecutor<S, R> apiExecutor;
   private TaskProgressListener<SyncProgressCount> progressListener;
   private BaseAPISyncErrorCollector<SyncError> collector = new BaseAPISyncErrorCollector<>();
 
   public APISyncExecutor(APISyncDataFetcher<T> fetcher,
-      APISyncSourceCollator<T, S> collator,
+      APISyncSourceCollator<T, S, SyncError> collator,
       APISyncRequestGenerator<S, R, SyncError> requestGenerator,
       APICallExecutor<S, R> apiExecutor) {
     this.fetcher = fetcher;
@@ -60,9 +61,21 @@ public class APISyncExecutor<T, S, R> implements TaskProgressPublisher<SyncProgr
     int itemsOnPage = 0;
 
     while (sourceDataList != null) {
-      List<S> collatedList = collator.collate(sourceDataList);
-      // TODO (@Satya) check if there were errors in collator and add to error list.
-      itemsOnPage = collatedList.size();
+      List<S> collatedList = null;
+      itemsOnPage = 0;
+      try {
+        collatedList = collator.collate(sourceDataList);
+        // TODO (@Satya) check if there were errors in collator and add to error list.
+      } catch (Throwable t) {
+        collector.addError(new SyncError(APISyncErrorLocation.COLLATOR,
+            BaseAPISyncErrorCode.RUN_TIME_EXCEPTION, t));
+      }
+
+      if (collatedList != null) {
+        itemsOnPage = collatedList.size();
+      } else {
+        collatedList = new ArrayList<>();
+      }
 
       updateProgress(new SyncProgressCount(++currentPage, pageCount, progressCount, itemsOnPage));
 
@@ -97,9 +110,8 @@ public class APISyncExecutor<T, S, R> implements TaskProgressPublisher<SyncProgr
               collector.addErrors(apiExecutor.getSyncErrors());
             }
           } catch (Throwable t) {
-            collector.addError(new SyncError(APISyncErrorLocation.API_SYNC_EXECUTE, BaseAPISyncErrorCode
-                .RUN_TIME_EXCEPTION,
-                t));
+            collector.addError(new SyncError(APISyncErrorLocation.API_SYNC_EXECUTE,
+                BaseAPISyncErrorCode.RUN_TIME_EXCEPTION, t));
           }
         }
 
