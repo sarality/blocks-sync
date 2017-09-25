@@ -65,6 +65,9 @@ public class APISyncExecutor<T, S, R> implements TaskProgressPublisher<SyncProgr
       itemsOnPage = 0;
       try {
         collatedList = collator.collate(sourceDataList);
+        if (collator.hasErrors()) {
+          collector.addErrors(collator.getSyncErrors());
+        }
         // TODO (@Satya) check if there were errors in collator and add to error list.
       } catch (Throwable t) {
         collector.addError(new SyncError(APISyncErrorLocation.COLLATOR,
