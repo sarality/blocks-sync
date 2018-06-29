@@ -21,7 +21,7 @@ public class GenericAPISyncResponseHandler<T, S, R, E extends Enum<E>>
     implements APISyncResponseHandler<S, R> {
 
   private final Table<T> table;
-  private final SyncStatusUpdater<T, E> syncUpdater;
+  private final SyncStatusUpdater<T, E> syncStatusUpdater;
   private final FieldValueGetter<T, Long> idGetter;
   private final FieldValueGetter<R, Long> responseGlobalIdGetter;
   private final FieldValueGetter<R, Long> responseVersionGetter;
@@ -32,7 +32,7 @@ public class GenericAPISyncResponseHandler<T, S, R, E extends Enum<E>>
 
 
   public GenericAPISyncResponseHandler(Table<T> table,
-      SyncStatusUpdater<T, E> syncUpdater,
+      SyncStatusUpdater<T, E> syncStatusUpdater,
       FieldValueGetter<T, Long> idGetter,
       FieldValueGetter<R, Long> responseGlobalIdGetter,
       FieldValueGetter<R, Long> responseVersionGetter,
@@ -40,7 +40,7 @@ public class GenericAPISyncResponseHandler<T, S, R, E extends Enum<E>>
       FieldValueSetter<T, String> globalIdSetter,
       FieldValueSetter<T, Long> globalVersionSetter) {
     this.table = table;
-    this.syncUpdater = syncUpdater;
+    this.syncStatusUpdater = syncStatusUpdater;
     this.idGetter = idGetter;
     this.responseGlobalIdGetter = responseGlobalIdGetter;
     this.responseVersionGetter = responseVersionGetter;
@@ -64,7 +64,7 @@ public class GenericAPISyncResponseHandler<T, S, R, E extends Enum<E>>
 
       try {
         table.open();
-        syncUpdater.markAsSynced(data);
+        syncStatusUpdater.markAsSynced(data);
       } finally {
         table.close();
       }
@@ -75,25 +75,15 @@ public class GenericAPISyncResponseHandler<T, S, R, E extends Enum<E>>
 
   @Override
   public APISyncResponseType processConflict(IOException e, S sourceData, R responseData) {
-
-    Long globalId = responseGlobalIdGetter.getValue(responseData);
-    Long globalVersion = responseVersionGetter.getValue(responseData);
     List<T> dataList = sourceDataGetter.getValue(sourceData);
-    String globalDataId = globalId.toString();
-    // TODO (@Satya) if globalId is null OR existing global Id is different, log an exception
-
     for (T data : dataList) {
-      globalIdSetter.setValue(data, globalDataId);
-      globalVersionSetter.setValue(data, globalVersion);
-
       try {
         table.open();
-        syncUpdater.markAsSyncConflict(data);
+        syncStatusUpdater.markAsSyncConflict(data);
       } finally {
         table.close();
       }
     }
-
     return APISyncResponseType.CONFLICT;
   }
 
