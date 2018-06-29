@@ -74,6 +74,30 @@ public class GenericAPISyncResponseHandler<T, S, R, E extends Enum<E>>
   }
 
   @Override
+  public APISyncResponseType processConflict(IOException e, S sourceData, R responseData) {
+
+    Long globalId = responseGlobalIdGetter.getValue(responseData);
+    Long globalVersion = responseVersionGetter.getValue(responseData);
+    List<T> dataList = sourceDataGetter.getValue(sourceData);
+    String globalDataId = globalId.toString();
+    // TODO (@Satya) if globalId is null OR existing global Id is different, log an exception
+
+    for (T data : dataList) {
+      globalIdSetter.setValue(data, globalDataId);
+      globalVersionSetter.setValue(data, globalVersion);
+
+      try {
+        table.open();
+        syncUpdater.markAsSyncConflict(data);
+      } finally {
+        table.close();
+      }
+    }
+
+    return APISyncResponseType.CONFLICT;
+  }
+
+  @Override
   public APISyncResponseType processError(IOException e, S sourceData, R requestData) {
     errorCollector.initErrorList();
 
