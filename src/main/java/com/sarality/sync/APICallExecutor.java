@@ -1,6 +1,7 @@
 package com.sarality.sync;
 
 import com.google.api.client.googleapis.services.json.AbstractGoogleJsonClientRequest;
+import com.google.api.client.http.HttpResponseException;
 import com.sarality.sync.data.APISyncErrorLocation;
 import com.sarality.sync.data.BaseAPISyncErrorCode;
 import com.sarality.sync.data.SyncError;
@@ -21,6 +22,8 @@ import java.util.Locale;
  */
 
 public abstract class APICallExecutor<S, R> {
+
+  private static final int HTTP_STATUS_CODE_CONFLICT = 409;
 
   private static Logger logger = LoggerFactory.getLogger(APICallExecutor.class);
   private static int MAX_RETRY_COUNT = 3;
@@ -59,6 +62,14 @@ public abstract class APICallExecutor<S, R> {
       try {
         R response = getApiCall().execute();
         apiSyncResponseType = getResponseHandler().process(source, response);
+      } catch (HttpResponseException hre) {
+        int statusCode = hre.getStatusCode();
+        if (statusCode == HTTP_STATUS_CODE_CONFLICT) {
+          apiSyncResponseType = getResponseHandler().processConflict(hre, source, request);
+        } else {
+          // TODO(@Satya) request transformer should be set by error processor
+          apiSyncResponseType = getResponseHandler().processError(hre, source, request);
+        }
       } catch (IOException e) {
         // TODO(@Satya) request transformer should be set by error processor
         apiSyncResponseType = getResponseHandler().processError(e, source, request);
@@ -66,10 +77,13 @@ public abstract class APICallExecutor<S, R> {
 
     }
 
-    if (!apiSyncResponseType.equals(APISyncResponseType.SUCCESS)) {
+    if (apiSyncResponseType.equals(APISyncResponseType.SUCCESS)
+        || apiSyncResponseType.equals(APISyncResponseType.CONFLICT)) {
+      return true;
+    } else {
       collector.addErrors(getResponseHandler().getSyncErrors());
+      return false;
     }
-    return apiSyncResponseType.equals(APISyncResponseType.SUCCESS);
   }
 
   public boolean hasErrors() {
