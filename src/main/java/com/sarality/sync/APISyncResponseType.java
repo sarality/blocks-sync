@@ -8,6 +8,7 @@ package com.sarality.sync;
 
 public enum APISyncResponseType {
   SUCCESS,
+  CONFLICT,
   FAILED_RETRY,
   FAILED_ABORT;
 }
