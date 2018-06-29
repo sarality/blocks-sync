@@ -64,7 +64,7 @@ public class GenericAPISyncResponseHandler<T, S, R, E extends Enum<E>>
 
       try {
         table.open();
-        syncUpdater.updateSyncStatus(data);
+        syncUpdater.markAsSynced(data);
       } finally {
         table.close();
       }
