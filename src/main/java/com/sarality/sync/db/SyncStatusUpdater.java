@@ -32,7 +32,7 @@ public class SyncStatusUpdater<T, E extends Enum<E>> {
   private final Column globalVersionColumn;
   private final Column locallyModifiedColumn;
 
-  private final E unmodifiedStatusValue;
+  private final E statusValue;
   private final E conflictStatusValue;
 
   public SyncStatusUpdater(Table<T> table,
@@ -43,7 +43,7 @@ public class SyncStatusUpdater<T, E extends Enum<E>> {
       Column globalIdColumn,
       Column globalVersionColumn,
       Column locallyModifiedColumn,
-      E unmodifiedStatusValue,
+      E statusValue,
       E conflictStatusValue) {
     this.table = table;
     this.idGetter = idGetter;
@@ -53,7 +53,7 @@ public class SyncStatusUpdater<T, E extends Enum<E>> {
     this.globalIdColumn = globalIdColumn;
     this.globalVersionColumn = globalVersionColumn;
     this.locallyModifiedColumn = locallyModifiedColumn;
-    this.unmodifiedStatusValue = unmodifiedStatusValue;
+    this.statusValue = statusValue;
     this.conflictStatusValue = conflictStatusValue;
   }
 
@@ -74,7 +74,7 @@ public class SyncStatusUpdater<T, E extends Enum<E>> {
             new SimpleQueryClause(globalIdColumn, Operator.IS_NULL)))
         .build();
     table.update(contentValues, query,
-        new LocallyModifiedColumnUpdater<E>(locallyModifiedColumn, unmodifiedStatusValue));
+        new LocallyModifiedColumnUpdater<E>(locallyModifiedColumn, statusValue));
   }
 
   public void markAsSyncConflict(T data) {
